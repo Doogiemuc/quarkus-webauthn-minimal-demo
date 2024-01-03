@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>quarkus-webauthn-minimal-demo</title>
+        <!-- This javascript library contains helper functions. They are provided by the quarkus-webauthn library -->
+        <script src="/q/webauthn/webauthn.js" type="text/javascript" charset="UTF-8"></script>
+        <style>
+            body {
+                font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+            }
+            .card {
+                border: 1px solid darkgrey;
+                border-radius: 10px;
+                background-color: #d7e4fc;
+                padding: 0 1rem 1rem 1rem;
+                margin-bottom: 2rem;
+                width: 400px;
+                text-align: center;
+            }
+            .grid {
+                display: inline-grid;
+                grid-template-columns: auto auto;
+                grid-gap: 1rem;
+                justify-items: start;
+            }
+            .grid-cell {
+                text-align: left;
+            }
+            #registerButton, #loginButton {
+                width: 50%;
+                height: 2rem;
+                margin-top: 1rem;
+                color: white;
+                background-color: darkblue;
+                border: none;
+                border-radius: 10px;
+            }
+        </style>
+
+    </head>
+    <body>
+        <div class="card">
+            <h2>Status</h2>
+            <p id="status">not logged in</p>
+        </div>
+        <div class="card">
+            <h2>1. Register</h2>
+            <div class="grid">
+                <div class="grid-cell">
+                    <label for="displayName">Your Full Name:</label>
+                </div>
+                <div class="grid-cell">
+                    <input type="text" id="displayName" value="John Doe" />
+                </div>
+                <div class="grid-cell">
+                    <label for="email">Your E-Mail:</label>
+                </div>
+                <div class="grid-cell">
+                    <input type="text" id="email" value="john.doe@domain.com" /><br/>
+                    <small>(Will be used as username.)</small>
+                </div>
+            </div>
+            <p><input type="button" id="registerButton" value="Register"/></p>
+        </div>
+        <div class="card">
+            <h2>2. Login</h2>
+            <input type="button" id="loginButton" value="Login"/>
+        </div>
+        <script type="text/javascript">
+            if (!WebAuthn) console.error("Could not load WebAuhn client library from /q/webauthn/webauthn.js! Check your quarkus-webauhn configuration in the backend!");
+
+            // Init the WebAuthn javascript helper library
+            const config = {
+                callbackPath: '/q/webauthn/callback',
+                registerPath: '/q/webauthn/register',
+                loginPath: '/q/webauthn/login'
+            };
+            console.log("Initiating WebAuthn client library with config", config);
+            const webAuthn = new WebAuthn(config);
+
+            const status = document.getElementById('status');
+            const registerButton = document.getElementById('registerButton');
+            const loginButton = document.getElementById('loginButton');
+
+            /** Register a new authenticator for the first time */
+            registerButton.onclick = () => {
+                var displayName = document.getElementById('displayName').value;
+                var email = document.getElementById('email').value;
+                status.replaceChildren();   // clear status
+                console.info("Trying to register new authenticator for email=" + email);
+                webAuthn.register({ name: email, displayName: displayName })  // we use email as username
+                  .then(body => {
+                    console.info("Successfully registered as " + email, body)
+                    status.append("Successfully registered as " + email);
+                  })
+                  .catch(err => {
+                    console.error("Registration failed", err);
+                    status.append("Registration failed: " + JSON.stringify(err));
+                  });
+                return false;
+            };
+
+            /** Login via fingerprint / face-ID */
+            loginButton.onclick = () => {
+                var email = document.getElementById('email').value;
+                status.replaceChildren();          // clear status
+                console.info("Trying to login as " + email);
+                webAuthn.login({ name: email })    // we use email as username
+                  .then(body => {
+                    console.info("Successfully logged in as: " + email)
+                    status.append("Logged in as: " + email);
+                  })
+                  .catch(err => {
+                    console.error("Login failed", err);
+                    status.append("Login failed: " + JSON.stringify(err));
+                  });
+                return false;
+            };
+
+        </script>
+    </body>
+</html>
