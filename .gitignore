@@ -37,7 +37,19 @@ nb-configuration.xml
 *.rej
 
 # Local environment
+application.local
 .env
 
-# Plugin directory
-/.quarkus/cli/plugins/
+# Exclude secrets !!!
+*.pem
+*.p12
+
+# Exclude configurations with secrets
+application-prod.yml
+/config/application-test.properties
+/config/application-local.properties
+/config/application-prod.properties
+/config/application-dev.properties
+/config/application-*.properties
+/import-testData.sql
+/createLiquidoDbSchema.sql
